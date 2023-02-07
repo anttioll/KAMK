@@ -4,7 +4,7 @@
 # Noin 200 kertaa hitaampi kuin nmap :D noh, oppipahan argparsesta ja vähän socketeista
 # Paketit testattu toimivaksi tcpdumpilla ja Wiresharkilla
 # Author: Antti Ollikainen, 2/2023
-# Licence: CC0
+# Licence: GPLv3
 
 
 import argparse
