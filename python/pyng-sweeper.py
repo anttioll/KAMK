@@ -94,7 +94,8 @@ def main():
         ip_address: str = str(ip_address[0]) + "." + str(ip_address[1]) + "." + str(ip_address[2]) + "." + str(i)
 
         try:
-            hostname: list = socket.gethostbyaddr(ip_address)
+            hostname: tuple = socket.gethostbyaddr(ip_address)
+            hostname: str = hostname[0]
         except:
             hostname: str = "No hostname"
 
@@ -104,7 +105,7 @@ def main():
         if(ping(ip_address, verbose) == 0):
             if verbose:
                 print("Succesful reply")
-            log_message = log_message + f"{hostname[0]:16} {ip_address:16} up\n"
+            log_message = log_message + f"{hostname:16} {ip_address:16} up\n"
         else:
             if verbose:
                 print("No reply")
