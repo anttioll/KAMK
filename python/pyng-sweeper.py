@@ -39,7 +39,7 @@ def parse_arguments():
 # Käytetty apuna calculate_checksum() ja ping()-aliohjelmien teossa:
 # https://gist.github.com/pyos/10980172
 # https://github.com/Akhavi/pyping/blob/master/pyping/core.py
-# Tässä tapahtuu jotain mustaa magiaa bittien siirtelyä tarkistussumman laskemiseksi
+# Tässä tapahtuu jotain mustaa magiaa bittien siirtelyä ja maskausta tarkistussumman laskemiseksi
 def calculate_checksum(data):
     x = sum(x << 8 if i % 2 else x for i, x in enumerate(data)) & 0xFFFFFFFF
     x = (x >> 16) + (x & 0xFFFF)
@@ -50,12 +50,20 @@ def calculate_checksum(data):
 
 def ping(ip_address: str, verbose: bool):
     data = b""
-    id: int = random.randrange(0, 65536)
+    id: int = random.randrange(0, 65535)
     seq_number: int = 1
     timeout: int = 1
 
     with socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP) as connection:
+        # Pakataan id ja seq_number C-kielen tietueeseen, iso H on unsinged short 0 - 65535
         id_and_seq = struct.pack("!HH", id, seq_number) 
+        # ICMP-otsakkeen rakenne:
+        # 8 bittiä, 8 bittiä, 16 bittiä
+        # Tyyppi, koodi, tarkistussumma
+        # Tyyppi 8, koodi 0 on echo request eli pingaus, mitä tässä käytetään
+        # Tyyppi 0, koodi 0 on echo reply
+        # Bitit 16-32: tunnus- ja järjestysnumero
+        # Bitit 32 eteenpäin: loput datasta, tässä ei dataa lähetetä
         packet = b"\x08\0" + calculate_checksum(b"\x08\0\0\0" + id_and_seq) + id_and_seq
 
         connection.connect((ip_address, 1))
@@ -102,6 +110,7 @@ def main():
         if verbose:
             print(f"\nPinging {ip_address}")
 
+        # Onnistunut pingaus palauttaa nollan
         if(ping(ip_address, verbose) == 0):
             if verbose:
                 print("Succesful reply")
@@ -123,6 +132,7 @@ if __name__ == "__main__":
         if(os.getuid() == 0):
             main()
         else:
+            # Raw-sokettien käsitteleminen vaatii root-oikeudet
             print("Program requires root-priviledges. Quitting program.")
             sys.exit(1)
     except KeyboardInterrupt:
