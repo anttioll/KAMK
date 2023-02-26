@@ -1,0 +1,11 @@
+Name,SamAccountName,GivenName,Surname,UserPrincipalName
+test_user_1,jormahu,Jorma,Huuskonen,jormahu@antti.koti
+test_user_2,anteroni,Antero,Niemi,anteroni@antti.koti
+test_user_3,seppose,Seppo,Seppa,seppose@antti.koti
+test_user_4,kalevika,Kalevi,Kainomieli,kalevika@antti.koti
+test_user_5,marttioi,Martti,Oikarinen,marttioi@antti.koti
+test_user_6,untoto,Unto,Tolvanen,untoto@antti.koti
+test_user_7,paavope,Paavo,Pesusieni,paavope@antti.koti
+test_user_8,ilarihi,Ilari,Hiltunen,ilarihi@antti.koti
+test_user_9,raimoka,Raimo,Karppinen,raimoka@antti.koti
+test_user_10,esako,Esa,Kovalainen,esako@antti.koti
