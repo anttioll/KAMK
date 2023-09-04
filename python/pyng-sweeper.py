@@ -8,6 +8,7 @@
 
 
 import argparse
+import ctypes
 import os
 import random
 import select
@@ -129,7 +130,7 @@ def main():
 
 if __name__ == "__main__":
     try:
-        if(os.getuid() == 0):
+        if sys.platform.startswith("linux") and os.getuid() == 0 or sys.platform.startswith("win32") and ctypes.windll.shell32.IsUserAnAdmin() != 0:
             main()
         else:
             # Raw-sokettien käsitteleminen vaatii root-oikeudet
