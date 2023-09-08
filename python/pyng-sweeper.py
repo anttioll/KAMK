@@ -1,9 +1,9 @@
 #!/usr/bin/python3
 # "Ping sweeper", joka tekee lokitiedoston pingatuista osoitteista ja niiden statuksesta
-# yrittää selvittää myös hostnamen
+# yrittää selvittää myös hostnamen ja avoimet portit käyttäjän niin halutessa
 # Noin 200 kertaa hitaampi kuin nmap :D noh, oppipahan argparsesta ja vähän socketeista
 # Paketit testattu toimivaksi tcpdumpilla ja Wiresharkilla
-# Author: Antti Ollikainen, 2/2023
+# Author: Antti Ollikainen, 9/2023
 # Licence: GPLv3
 
 
@@ -27,9 +27,12 @@ def parse_arguments():
     parser.add_argument("network", type=str, metavar="network address")
     parser.add_argument("-s", type=int, choices=range(1, 255), default=1, metavar="starting octet", help="optional, defaults to 1")
     parser.add_argument("-e", type=int, choices=range(1, 255),  default=254, metavar="ending octet", help="optional, defaults to 254")
+    parser.add_argument("-P", action="store_true", help="scan for open ports")
+    parser.add_argument("-sp", type=int, choices=range(1, 1024), default=1, metavar="starting port to scan", help="optional, defaults to 1")
+    parser.add_argument("-ep", type=int, choices=range(1, 1024), default=1024, metavar="last port to scan", help="optional, defaults to 1024")
     parser.add_argument("-l", type=str, default="log_pyng_sweeper.txt", metavar="log file", help="optional, name of log file, defaults to log_pyng_sweeper.txt")
     # verbose mode oli vähän jälkiajatus ja olisi varmaan järkevämpiäkin tapoja toteuttaa, kuin läiskiä koodiin yksittäisiä if-lausekkeita
-    parser.add_argument("-v", action="store_true", help="verbose mode")
+    parser.add_argument("-v", action="store_true", help="enable verbose mode")
     parser.add_argument("--version", action="version", version=f"{program_name} 0.0.1")
     
     args = parser.parse_args()
@@ -57,6 +60,7 @@ def ping(ip_address: str, verbose: bool):
 
     with socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP) as connection:
         # Pakataan id ja seq_number C-kielen tietueeseen, iso H on unsinged short 0 - 65535
+        # Huutomerkki on tavujärjestys (big endian aina verkkoliikenteessä)
         id_and_seq = struct.pack("!HH", id, seq_number) 
         # ICMP-otsakkeen rakenne:
         # 8 bittiä, 8 bittiä, 16 bittiä
@@ -67,7 +71,7 @@ def ping(ip_address: str, verbose: bool):
         # Bitit 32 eteenpäin: loput datasta, tässä ei dataa lähetetä
         packet = b"\x08\0" + calculate_checksum(b"\x08\0\0\0" + id_and_seq) + id_and_seq
 
-        connection.connect((ip_address, 1))
+        connection.connect((ip_address, 1)) # Portilla ei ole väliä pingatessa, se voi olla 1
         connection.sendall(packet)
         if verbose:
             print(f"Sent packet: {packet}")
@@ -78,16 +82,35 @@ def ping(ip_address: str, verbose: bool):
                 print(f"Received packet: {reply}")
                 print(f"Length of packet: {len(reply)} bytes")
             # Vastauspakettien pitäisi olla 28 tavua pitkiä, 20 IP + 8 ICMP
-            if(len(reply) < 28):
-                continue
+            #if(len(reply) < 28):
+            #    continue
+            #else:
+            #    return 0
+            if(len(reply) >= 28):
+               return 0
+
+
+def scan_open_ports(ip_address: str, start_port: int, end_port: int):
+
+    for port in range(start_port, end_port + 1):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as connection:
+            port_status = connection.connect_ex((ip_address, port))
+            if port_status == 0:
+                print(f"Portti: {port} auki")
             else:
-                return 0
+                print(f"Portti: {port} kiinni")
+        connection.close()
+
+    return "lulz :D"
             
 
 def main():
     args: cls = parse_arguments()
-    start: int = args.s
-    end: int = args.e
+    start_net: int = args.s
+    end_net: int = args.e
+    port_scan: bool = args.P
+    start_port: int = args.sp
+    end_port: int = args.ep
     log_file: str = args.l
     log_message: str = "{:16} {:16} {:16}\n".format("Hostname:", "IP address:", "State:")
     verbose: bool = args.v
@@ -98,7 +121,7 @@ def main():
         print("Invalid IP address. Quitting program.")
         sys.exit(1)
 
-    for i in range(start, end + 1):
+    for i in range(start_net, end_net + 1):
         ip_address: list = args.network.split(".")
         ip_address: str = str(ip_address[0]) + "." + str(ip_address[1]) + "." + str(ip_address[2]) + "." + str(i)
 
@@ -121,6 +144,9 @@ def main():
                 print("No reply")
             log_message = log_message + f"{hostname:16} {ip_address:16} down\n"
 
+        if(port_scan):
+            log_message = log_message + scan_open_ports(ip_address, start_port, end_port)
+
     with open(log_file, "wt") as file:
         file.write(log_message)
     file.close()
@@ -138,4 +164,4 @@ if __name__ == "__main__":
             sys.exit(1)
     except KeyboardInterrupt:
         print("Program terminated with Ctrl-C.")
-        sys.exit(1)
+        sys.exit(2)
