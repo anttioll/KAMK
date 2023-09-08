@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 # "Ping sweeper", joka tekee lokitiedoston pingatuista osoitteista ja niiden statuksesta
 # yrittää selvittää myös hostnamen ja avoimet portit käyttäjän niin halutessa
-# Noin 200 kertaa hitaampi kuin nmap :D noh, oppipahan argparsesta ja vähän socketeista
 # Paketit testattu toimivaksi tcpdumpilla ja Wiresharkilla
 # Author: Antti Ollikainen, 9/2023
 # Licence: GPLv3
@@ -9,6 +8,7 @@
 
 import argparse
 import ctypes
+import errno
 import os
 import random
 import select
@@ -56,7 +56,6 @@ def ping(ip_address: str, verbose: bool):
     data = b""
     id: int = random.randrange(0, 65535)
     seq_number: int = 1
-    timeout: int = 1
 
     with socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP) as connection:
         # Pakataan id ja seq_number C-kielen tietueeseen, iso H on unsinged short 0 - 65535
@@ -71,37 +70,44 @@ def ping(ip_address: str, verbose: bool):
         # Bitit 32 eteenpäin: loput datasta, tässä ei dataa lähetetä
         packet = b"\x08\0" + calculate_checksum(b"\x08\0\0\0" + id_and_seq) + id_and_seq
 
+        connection.settimeout(1)
         connection.connect((ip_address, 1)) # Portilla ei ole väliä pingatessa, se voi olla 1
         connection.sendall(packet)
         if verbose:
             print(f"Sent packet: {packet}")
         
-        while select.select([connection], [], [], timeout)[0]:
+        while select.select([connection], [], [], 1)[0]:
             reply = connection.recv(1024)
             if verbose:
                 print(f"Received packet: {reply}")
                 print(f"Length of packet: {len(reply)} bytes")
             # Vastauspakettien pitäisi olla 28 tavua pitkiä, 20 IP + 8 ICMP
-            #if(len(reply) < 28):
-            #    continue
-            #else:
-            #    return 0
             if(len(reply) >= 28):
-               return 0
+                connection.close()
+                return 0
+            else:
+                continue
 
 
-def scan_open_ports(ip_address: str, start_port: int, end_port: int):
+def scan_open_ports(ip_address: str, log_message: str, start_port: int, end_port: int):
 
     for port in range(start_port, end_port + 1):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as connection:
-            port_status = connection.connect_ex((ip_address, port))
-            if port_status == 0:
-                print(f"Portti: {port} auki")
-            else:
-                print(f"Portti: {port} kiinni")
-        connection.close()
+            try:
+                connection.settimeout(1)
+                connection.connect((ip_address, port))
+                #if port_status == 0:
+                #    print(f"Port {port} open")
+                log_message = log_message + f"{port:16}"
+                print("toimii")
+                connection.close()
+            #except socket.gaierror as error:
+            #    print(error)
+            #    sys.exit(1)
+            except Exception as error:
+                print(error)
 
-    return "lulz :D"
+    return log_message
             
 
 def main():
@@ -112,7 +118,7 @@ def main():
     start_port: int = args.sp
     end_port: int = args.ep
     log_file: str = args.l
-    log_message: str = "{:16} {:16} {:16}\n".format("Hostname:", "IP address:", "State:")
+    log_message: str = "{:16} {:16} {:16} {:16}\n".format("Hostname:", "IP address:", "State:", "Open ports:")
     verbose: bool = args.v
 
     try:
@@ -138,14 +144,15 @@ def main():
         if(ping(ip_address, verbose) == 0):
             if verbose:
                 print("Succesful reply")
-            log_message = log_message + f"{hostname:16} {ip_address:16} up\n"
+            log_message = log_message + f"{hostname:16} {ip_address:16} up"
         else:
             if verbose:
                 print("No reply")
-            log_message = log_message + f"{hostname:16} {ip_address:16} down\n"
+            log_message = log_message + f"{hostname:16} {ip_address:16} down"
 
         if(port_scan):
-            log_message = log_message + scan_open_ports(ip_address, start_port, end_port)
+            log_message = scan_open_ports(ip_address, log_message, start_port, end_port)
+        log_message = log_message + "\n"
 
     with open(log_file, "wt") as file:
         file.write(log_message)
