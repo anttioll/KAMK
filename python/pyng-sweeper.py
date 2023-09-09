@@ -96,16 +96,10 @@ def scan_open_ports(ip_address: str, log_message: str, start_port: int, end_port
             try:
                 connection.settimeout(1)
                 connection.connect((ip_address, port))
-                #if port_status == 0:
-                #    print(f"Port {port} open")
-                log_message = log_message + f"{port:16}"
-                print("toimii")
-                connection.close()
-            #except socket.gaierror as error:
-            #    print(error)
-            #    sys.exit(1)
-            except Exception as error:
-                print(error)
+                log_message = log_message + f"{port}, "
+            except OSError as error:
+                pass
+        connection.close()
 
     return log_message
             
@@ -144,11 +138,11 @@ def main():
         if(ping(ip_address, verbose) == 0):
             if verbose:
                 print("Succesful reply")
-            log_message = log_message + f"{hostname:16} {ip_address:16} up"
+            log_message = log_message + f"{hostname:16} {ip_address:16} up" + " " * 15
         else:
             if verbose:
                 print("No reply")
-            log_message = log_message + f"{hostname:16} {ip_address:16} down"
+            log_message = log_message + f"{hostname:16} {ip_address:16} down" + " " * 13
 
         if(port_scan):
             log_message = scan_open_ports(ip_address, log_message, start_port, end_port)
