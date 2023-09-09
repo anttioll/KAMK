@@ -8,7 +8,6 @@
 
 import argparse
 import ctypes
-import errno
 import os
 import random
 import select
