@@ -5,7 +5,6 @@
 #sed -i "1d,2d" /etc/apt/sources.list
 
 apt update -q -y && apt upgrade -q -y
-
 apt install -q -y man vim lsof dnsutils iptables-persistent chrony
 
 ALIAS_SH=/etc/profile.d/alias.sh
@@ -28,7 +27,7 @@ echo "server 10.10.10.6" >> $CHRONY_CONF
 echo "driftfile /var/lib/chrony/chrony.drift" >> $CHRONY_CONF
 echo "#log tracking measurements statistics" >> $CHRONY_CONF
 echo "logdir /var/log/chrony" >> $CHRONY_CONF
-echo "maxudpateskew 100.0" >> $CHRONY_CONF
+echo "maxupdateskew 100.0" >> $CHRONY_CONF
 echo "rtcsync" >> $CHRONY_CONF
 echo "makestep 1 3" >> $CHRONY_CONF
 echo "leapsectz right/UTC" >> $CHRONY_CONF

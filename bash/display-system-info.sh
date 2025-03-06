@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
-# A quick and dirty Bash-script that displays useful system info with the help of AWK and sed
-# Author: Antti Ollikainen, 2/2023
-# Licence: GPLv3
+# Learning AWK and sed
+# Antti Ollikainen, 2/2023
 
-# Set up variables for displaying system info
 if [[ -e /usr/lib/os-release ]]; then
 	OS=`awk '/PRETTY_NAME/ {print $0}' /usr/lib/os-release | sed -e "s/PRETTY_NAME=//g;s/\"*//g"`
 else
@@ -32,7 +30,6 @@ fi
 
 NIC=`route -n | awk '$1=="0.0.0.0" {print $8; exit}'`
 
-# Script depends on NetworkManager because I felt lazy
 if [[ `nmcli device show $NIC` ]]; then
 	IPv4=`nmcli device show $NIC | awk '/IP4.ADDRESS/ {print $2}'`
 	IPv6=`nmcli device show $NIC | awk '/IP6.ADDRESS/ {print $2}'`
@@ -43,7 +40,6 @@ fi
 
 DEFAULT_GW=`route -n | awk '/0.0.0.0/ {print $2; exit}'`
 
-# Display system info
 echo
 echo "Operating system: $OS"
 echo "Kernel version: $KERNEL_VER"

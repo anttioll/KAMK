@@ -2,7 +2,6 @@
 # Skripti tekee varmuuskopion kansiosta TARGET_DIR kansioon SAVE_DIR
 # Skripti on turhan monimutkainen ihan vain harjoituksen vuoksi
 # Antti Ollikainen, TTK22SD, 1/2023
-# Licence: GPLv3
 
 E_BADARGS=64
 TARGET_DIR=/home/ao/koulu/bash/temp

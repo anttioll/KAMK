@@ -1,2 +1,8 @@
 **/.*
 !.gitignore
+*~
+.env
+.secret
+.secret/
+.terraform/
+.terraform.lock.hcl

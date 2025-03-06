@@ -3,7 +3,6 @@
 # yrittää selvittää myös hostnamen ja avoimet portit käyttäjän niin halutessa
 # Paketit testattu toimivaksi tcpdumpilla ja Wiresharkilla
 # Author: Antti Ollikainen, 9/2023
-# Licence: GPLv3
 
 
 import argparse
@@ -30,7 +29,6 @@ def parse_arguments():
     parser.add_argument("-sp", type=int, choices=range(1, 1024), default=1, metavar="starting port to scan", help="optional, defaults to 1")
     parser.add_argument("-ep", type=int, choices=range(1, 1024), default=1024, metavar="last port to scan", help="optional, defaults to 1024")
     parser.add_argument("-l", type=str, default="log_pyng_sweeper.txt", metavar="log file", help="optional, name of log file, defaults to log_pyng_sweeper.txt")
-    # verbose mode oli vähän jälkiajatus ja olisi varmaan järkevämpiäkin tapoja toteuttaa, kuin läiskiä koodiin yksittäisiä if-lausekkeita
     parser.add_argument("-v", action="store_true", help="enable verbose mode")
     parser.add_argument("--version", action="version", version=f"{program_name} 0.0.1")
     
@@ -42,7 +40,6 @@ def parse_arguments():
 # Käytetty apuna calculate_checksum() ja ping()-aliohjelmien teossa:
 # https://gist.github.com/pyos/10980172
 # https://github.com/Akhavi/pyping/blob/master/pyping/core.py
-# Tässä tapahtuu jotain mustaa magiaa bittien siirtelyä ja maskausta tarkistussumman laskemiseksi
 def calculate_checksum(data):
     x = sum(x << 8 if i % 2 else x for i, x in enumerate(data)) & 0xFFFFFFFF
     x = (x >> 16) + (x & 0xFFFF)
@@ -133,7 +130,6 @@ def main():
         if verbose:
             print(f"\nPinging {ip_address}")
 
-        # Onnistunut pingaus palauttaa nollan
         if(ping(ip_address, verbose) == 0):
             if verbose:
                 print("Succesful reply")

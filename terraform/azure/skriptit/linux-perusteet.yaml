@@ -1,0 +1,37 @@
+#cloud-config
+
+groups:
+  - linuxrunner
+
+users:
+  - default
+  - name: linuxrunner
+    primary_group: linuxrunner
+    home: /home/linuxrunner
+    shell: /bin/bash
+    lock_passwd: True
+    groups: [adm, sudo, linuxrunner, dialout, floppy, cdrom, audio, dip, plugdev, netdev, lxd]
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    ssh_authorized_keys:
+      #- ssh-rsa 
+
+package_update: True
+package_upgrade: True
+
+packages:
+  - nginx
+  - pipx
+  - python3.11
+
+runcmd:
+  - mkdir -p /data/www
+  - sed -i "s/\/var\/www\/html;/\/data\/www;/" /etc/nginx/sites-enabled/default
+  - systemctl enable nginx
+  - systemctl restart nginx
+  - pipx install poetry
+  - pipx ensurepath
+  - cd /tmp/linux-perusteet
+  - poetry install --no-root
+  - poetry run mkdocs build
+  - chown -R linuxrunner:linuxrunner /data
+  - mv -f site/* /data/www/

@@ -1,5 +1,4 @@
 # Author: Antti Ollikainen
-# License: GPLv3
 
 $hostname = Get-Content env:\COMPUTERNAME
 $os = Get-CimInstance -ClassName Win32_OperatingSystem
