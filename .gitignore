@@ -1,6 +1,9 @@
 **/.*
+*.pyc
 !.gitignore
 *~
+__*__*
+venv/
 .env
 .secret
 .secret/
